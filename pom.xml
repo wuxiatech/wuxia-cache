@@ -11,12 +11,12 @@
         <relativePath>../wuxia-parent</relativePath>
     </parent>
 
-    <artifactId>wuxia-cache</artifactId>
+    <artifactId>wuxia-component-cache</artifactId>
     <name>WUXIA Cache</name>
     <description>WUXIA Cache Project</description>
     <version>2.3.0-SNAPSHOT</version>
     <packaging>jar</packaging>
-    <url>https://github.com/wuxiatech/wuxia-cache</url>
+    <url>https://github.com/wuxiatech/wuxia-component-cache</url>
     <properties>
         <wuxia-common.version>2.3.0-SNAPSHOT</wuxia-common.version>
         <!-- about cache -->
@@ -132,5 +132,5 @@
             </plugin>
         </plugins>
     </build>
-    <groupId>cn.wuxia.common</groupId>
+    <groupId>cn.wuxia.component</groupId>
 </project>

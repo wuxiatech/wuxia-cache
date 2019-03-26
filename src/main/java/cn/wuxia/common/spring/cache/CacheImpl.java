@@ -59,14 +59,13 @@ public class CacheImpl implements Cache {
             loggerMsg();
             return null;
         }
-        ;
 
-        if (MemcachedUtils.hasControlChar((String) key)) {
+        if (MemcachedUtils.hasControlChar(key.toString())) {
             key = key.toString().replaceAll("\\s*", "");
         }
         logger.debug("get:{}, cachename:{}", key, this.cacheName);
 
-        Object object = this.cacheClient.get((String) key, this.cacheName);
+        Object object = this.cacheClient.get(key.toString(), this.cacheName);
         return (object != null ? new SimpleValueWrapper(object) : null);
     }
 
@@ -76,28 +75,33 @@ public class CacheImpl implements Cache {
             loggerMsg();
             return;
         }
-        if (value == null)
+        if (value == null) {
             return;
-        if (MemcachedUtils.hasControlChar((String) key)) {
+        }
+        if (MemcachedUtils.hasControlChar(key.toString())) {
             key = key.toString().replaceAll("\\s*", "");
         }
         logger.debug("set:{}, cachename:{}", key, this.cacheName);
-        this.cacheClient.set((String) key, value, this.expiredTime, this.cacheName);
+        this.cacheClient.set(key.toString(), value, this.expiredTime, this.cacheName);
     }
 
     @Override
     public void evict(Object key) {
-        if (disableCache) return;
-        if (MemcachedUtils.hasControlChar((String) key)) {
+        if (disableCache) {
+            return;
+        }
+        if (MemcachedUtils.hasControlChar(key.toString())) {
             key = key.toString().replaceAll("\\s*", "");
         }
         logger.debug("delete:{}, cachename:{}", key, this.cacheName);
-        this.cacheClient.delete((String) key, this.cacheName);
+        this.cacheClient.delete(key.toString(), this.cacheName);
     }
 
     @Override
     public void clear() {
-        if (disableCache) return;
+        if (disableCache) {
+            return;
+        }
         this.cacheClient.flush(this.cacheName);
     }
 
@@ -131,10 +135,10 @@ public class CacheImpl implements Cache {
             loggerMsg();
             return null;
         }
-        ;
         ValueWrapper valueWrapper = get(key);
-        if (valueWrapper != null)
+        if (valueWrapper != null) {
             return (T) valueWrapper.get();
+        }
         return null;
     }
 
@@ -144,17 +148,19 @@ public class CacheImpl implements Cache {
         if (v == null) {
             put(key, value);
             return new SimpleValueWrapper(value);
-        } else
+        } else {
             return v;
+        }
     }
 
     @Override
     public <T> T get(Object key, Callable<T> arg1) {
-        return (T) get((String) key);
+        return (T) get(key.toString());
     }
 
     public void loggerMsg() {
-        if (disableCache)
+        if (disableCache) {
             logger.warn("缓存{}已被禁用", cacheName);
+        }
     }
 }

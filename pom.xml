@@ -5,27 +5,22 @@
     <parent>
         <groupId>cn.wuxia.parent</groupId>
         <artifactId>parent2019</artifactId>
-        <version>2.3.2</version>
-        <!--<artifactId>parent2017</artifactId>-->
-        <!--<version>1.5.3</version>-->
-        <relativePath>../wuxia-parent</relativePath>
+        <version>2.3.3</version>
     </parent>
 
     <artifactId>wuxia.cache-component</artifactId>
     <name>WUXIA Cache</name>
     <description>WUXIA Cache Project</description>
-    <version>2.3.2</version>
+    <version>${project.parent.version}</version>
     <packaging>jar</packaging>
     <url>https://github.com/wuxiatech/wuxia-component-cache</url>
     <properties>
-        <wuxia-common.version>2.3.2</wuxia-common.version>
+        <wuxia-common.version>${project.parent.version}</wuxia-common.version>
         <!-- about cache -->
         <spring-data-redis.version>2.0.13.RELEASE</spring-data-redis.version>
         <jedis.version>2.9.1</jedis.version>
-        <spymemcached.version>2.12.3</spymemcached.version>
         <xmemcached.version>2.4.6</xmemcached.version>
         <simple-spring-memcached.version>4.1.2</simple-spring-memcached.version>
-        <ehcache.version>2.10.3</ehcache.version>
     </properties>
     <dependencies>
         <dependency>
@@ -62,30 +57,6 @@
             <artifactId>spring-cache</artifactId>
             <version>${simple-spring-memcached.version}</version>
             <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>net.spy</groupId>
-            <artifactId>spymemcached</artifactId>
-            <version>${spymemcached.version}</version>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>com.google.code.simple-spring-memcached</groupId>
-            <artifactId>spymemcached-provider</artifactId>
-            <version>${simple-spring-memcached.version}</version>
-            <optional>true</optional>
-        </dependency>
-        <!-- ehcache -->
-        <dependency>
-            <groupId>net.sf.ehcache</groupId>
-            <artifactId>ehcache</artifactId>
-            <version>${ehcache.version}</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/net.sf.ehcache/ehcache-jgroupsreplication -->
-        <dependency>
-            <groupId>net.sf.ehcache</groupId>
-            <artifactId>ehcache-jgroupsreplication</artifactId>
-            <version>1.7</version>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>

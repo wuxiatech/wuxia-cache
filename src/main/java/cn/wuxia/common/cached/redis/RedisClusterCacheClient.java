@@ -11,41 +11,43 @@ package cn.wuxia.common.cached.redis;
 import cn.wuxia.common.cached.CacheClient;
 import cn.wuxia.common.util.ArrayUtil;
 import cn.wuxia.common.util.StringUtil;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPool;
-import redis.clients.jedis.JedisPoolConfig;
+import redis.clients.jedis.*;
 
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 
 /**
  * 简单的操作，复杂的操作需要直接操作jedis
- * @author songlin
+ * songlin.li
  */
-public class RedisCacheClient implements CacheClient {
-    private static Logger logger = LoggerFactory.getLogger(RedisCacheClient.class);
+public class RedisClusterCacheClient implements CacheClient {
+    private static Logger logger = LoggerFactory.getLogger(RedisClusterCacheClient.class);
 
-    private Jedis jedis;
+    private JedisCluster jedisCluster;
 
     private int expiredTime = 0;
 
     private String password;
 
-    private JedisPool jedisPool;
 
     @Override
-    public void init(String... server) {
-        String host;
-        String port = null;
-        if (ArrayUtil.isNotEmpty(server)) {
-            host = StringUtil.substringBefore(server[0], ":");
-            port = StringUtil.substringAfter(server[0], ":");
-        } else {
-            host = "127.0.0.1";
+    public void init(String[] servers) {
+        if (ArrayUtils.isEmpty(servers)) {
+            logger.error("初始化失败，没找到redis服务端");
+            return;
         }
+
+        Set<HostAndPort> nodes = new HashSet<HostAndPort>();
+        for (String server : servers) {
+            String host = StringUtil.substringBefore(server, ":");
+            String port = StringUtil.substringAfter(server, ":");
+            HostAndPort hostAndPort = new HostAndPort(host, Integer.parseInt(port));
+            nodes.add(hostAndPort);
+        }
+
 
         JedisPoolConfig config = new JedisPoolConfig();
         config.setMaxTotal(100);
@@ -53,24 +55,19 @@ public class RedisCacheClient implements CacheClient {
         config.setMaxWaitMillis(3000);
         config.setTestOnBorrow(true);
         config.setTestOnReturn(true);
-
-        port = StringUtil.isBlank(port) ? "6379" : port;
         if (StringUtil.isNotBlank(password)) {
-            jedisPool = new JedisPool(config, host, Integer.valueOf(port), 2000, password);
+            jedisCluster = new JedisCluster(nodes, 10000, 2000, 5, password, config);
         } else {
-            jedisPool = new JedisPool(config, host, Integer.valueOf(port));
+            jedisCluster = new JedisCluster(nodes, 10000, config);
         }
-        jedis = jedisPool.getResource();
     }
 
-
-    public JedisPool getJedisPool() {
-        return jedisPool;
+    public JedisCluster getJedisCluster() {
+        return jedisCluster;
     }
 
-    public void setJedisPool(JedisPool jedisPool) {
-        this.jedisPool = jedisPool;
-        this.jedis = jedisPool.getResource();
+    public void setJedisCluster(JedisCluster jedisCluster) {
+        this.jedisCluster = jedisCluster;
     }
 
     public int getExpiredTime() {
@@ -96,7 +93,7 @@ public class RedisCacheClient implements CacheClient {
 
     @Override
     public boolean containKey(String key) {
-        return BooleanUtils.toBooleanDefaultIfNull(jedis.exists(key), false);
+        return BooleanUtils.toBooleanDefaultIfNull(jedisCluster.exists(key), false);
     }
 
     @Override
@@ -117,11 +114,12 @@ public class RedisCacheClient implements CacheClient {
 
     @Override
     public void set(String key, Object value, int expiredTime) {
-        if (value == null)
+        if (value == null) {
             return;
+        }
         final byte[] keyf = key.getBytes();
         final byte[] valuef = new ObjectsTranscoder().serialize(value);
-        jedis.setex(keyf, expiredTime, valuef);
+        jedisCluster.setex(keyf, expiredTime, valuef);
     }
 
     @Override
@@ -131,15 +129,16 @@ public class RedisCacheClient implements CacheClient {
 
     @Override
     public void set(String key, Object value) {
-        if (value == null)
+        if (value == null) {
             return;
+        }
         final byte[] keyf = key.getBytes();
 //        if (value instanceof List) {
 //            final byte[] valuef = new ListTranscoder().serialize(value);
-//            jedis.set(keyf, valuef);
+//            jedisCluster.set(keyf, valuef);
 //        } else {
         final byte[] valuef = new ObjectsTranscoder().serialize(value);
-        jedis.set(keyf, valuef);
+        jedisCluster.set(keyf, valuef);
 //        }
     }
 
@@ -160,13 +159,13 @@ public class RedisCacheClient implements CacheClient {
 
     @Override
     public <T> T get(String key) {
-        byte[] value = jedis.get(key.getBytes());
+        byte[] value = jedisCluster.get(key.getBytes());
         return (T) new ObjectsTranscoder().deserialize(value);
     }
 
     @Override
     public long incr(String key) {
-        return jedis.incr(key);
+        return jedisCluster.incr(key);
     }
 
     @Override
@@ -176,13 +175,15 @@ public class RedisCacheClient implements CacheClient {
 
     @Override
     public long incr(String key, long by) {
-        return jedis.incrBy(key, by);
+        return jedisCluster.incrBy(key, by);
     }
 
     @Override
     public long incr(String key, long by, long defaultValue) {
-        Long r = jedis.incrBy(key, by);
-        if (r == null) return defaultValue;
+        Long r = jedisCluster.incrBy(key, by);
+        if (r == null) {
+            return defaultValue;
+        }
         return r;
     }
 
@@ -193,7 +194,7 @@ public class RedisCacheClient implements CacheClient {
 
     @Override
     public long decr(String key) {
-        return jedis.decr(key);
+        return jedisCluster.decr(key);
     }
 
     @Override
@@ -203,13 +204,15 @@ public class RedisCacheClient implements CacheClient {
 
     @Override
     public long decr(String key, long by) {
-        return jedis.incrBy(key, by);
+        return jedisCluster.incrBy(key, by);
     }
 
     @Override
     public long decr(String key, long by, long defaultValue) {
-        Long r = jedis.decrBy(key, by);
-        if (r == null) return defaultValue;
+        Long r = jedisCluster.decrBy(key, by);
+        if (r == null) {
+            return defaultValue;
+        }
         return r;
     }
 
@@ -220,7 +223,7 @@ public class RedisCacheClient implements CacheClient {
 
     @Override
     public void delete(String key) {
-        jedis.del(key);
+        jedisCluster.del(key);
     }
 
     @Override
@@ -235,8 +238,7 @@ public class RedisCacheClient implements CacheClient {
 
     @Override
     public void shutdown() {
-        jedis.close();
-        jedis.disconnect();
+        jedisCluster.shutdown();
     }
 
     @Override
@@ -268,12 +270,12 @@ public class RedisCacheClient implements CacheClient {
 
     @Override
     public void flush(String namespace) {
-        Set<String> set = jedis.hkeys(namespace + "*");
+        Set<String> set = jedisCluster.hkeys(namespace + "*");
         Iterator<String> it = set.iterator();
         while (it.hasNext()) {
             String keyStr = it.next();
             System.out.println(keyStr);
-            jedis.del(keyStr);
+            jedisCluster.del(keyStr);
         }
     }
 

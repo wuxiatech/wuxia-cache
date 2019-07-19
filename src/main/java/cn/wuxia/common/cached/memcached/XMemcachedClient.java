@@ -1,24 +1,18 @@
 package cn.wuxia.common.cached.memcached;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.TimeoutException;
-
+import cn.wuxia.common.cached.CacheClient;
+import cn.wuxia.common.util.ListUtil;
+import cn.wuxia.common.util.StringUtil;
+import com.google.common.collect.Lists;
+import net.rubyeye.xmemcached.*;
+import net.rubyeye.xmemcached.utils.AddrUtil;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.Lists;
-
-import cn.wuxia.common.cached.CacheClient;
-import cn.wuxia.common.util.ListUtil;
-import cn.wuxia.common.util.StringUtil;
-import net.rubyeye.xmemcached.CASOperation;
-import net.rubyeye.xmemcached.GetsResponse;
-import net.rubyeye.xmemcached.MemcachedClient;
-import net.rubyeye.xmemcached.MemcachedClientBuilder;
-import net.rubyeye.xmemcached.XMemcachedClientBuilder;
-import net.rubyeye.xmemcached.utils.AddrUtil;
+import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.TimeoutException;
 
 /**
  * [ticket id]
@@ -39,6 +33,7 @@ public class XMemcachedClient implements CacheClient {
     /**
      * 从缓存中获取值
      */
+    @Override
     @SuppressWarnings("unchecked")
     public <T> T get(String key) {
         try {
@@ -70,6 +65,7 @@ public class XMemcachedClient implements CacheClient {
      * @param expiredTime 缓存失效时间单位秒
      * @return
      */
+    @Override
     public void add(String key, Object value, int expiredTime) {
         if (value == null) {
             return;
@@ -93,9 +89,15 @@ public class XMemcachedClient implements CacheClient {
         }
     }
 
+    @Override
+    public void add(String key, Object value, String namespace) {
+        add(key, value, expiredTime, namespace);
+    }
+
     /**
      * 添加到缓存，不允许重复key，如重复则报错
      */
+    @Override
     public void add(String key, Object value) {
         add(key, value, expiredTime);
     }
@@ -108,6 +110,7 @@ public class XMemcachedClient implements CacheClient {
      * @param expiredTime 缓存失效时间单位秒
      * @return
      */
+    @Override
     public void set(String key, Object value, int expiredTime) {
         if (value == null) {
             logger.warn("key[{}] --> value can't be null");
@@ -132,9 +135,15 @@ public class XMemcachedClient implements CacheClient {
         }
     }
 
+    @Override
+    public void set(String key, Object value, String namespace) {
+        set(key, value, expiredTime, namespace);
+    }
+
     /**
      * 增加一个缓存，如key存在则替换原来的值,返回true
      */
+    @Override
     public void set(String key, Object value) {
         set(key, value, expiredTime);
     }
@@ -147,6 +156,7 @@ public class XMemcachedClient implements CacheClient {
      * @param expiredTime
      * @return
      */
+    @Override
     public void replace(String key, Object value, int expiredTime) {
         if (value == null) {
             return;
@@ -170,11 +180,16 @@ public class XMemcachedClient implements CacheClient {
         }
     }
 
+    @Override
+    public void replace(String key, Object value, String namespace) {
+        replace(key, value, expiredTime, namespace);
+    }
+
     /**
      * 替换一个缓存，如果缓存key存在则替换并返回true，如果不存在则不替换并返回false
      */
+    @Override
     public void replace(String key, Object value) {
-
         replace(key, value, expiredTime);
 
     }
@@ -182,6 +197,7 @@ public class XMemcachedClient implements CacheClient {
     /**
      * 删除一个缓存数据
      */
+    @Override
     public void delete(String key) {
         boolean isdelete = false;
         try {
@@ -233,10 +249,12 @@ public class XMemcachedClient implements CacheClient {
         try {
             MemcachedUtils.validateKey(key);
             return memcachedClient.cas(key, 0, new CASOperation<Integer>() {
+                @Override
                 public int getMaxTries() {
                     return 1;
                 }
 
+                @Override
                 public Integer getNewValue(long currentCAS, Integer currentValue) {
                     return 2;
                 }
@@ -257,6 +275,11 @@ public class XMemcachedClient implements CacheClient {
     @Override
     public long incr(String key) {
         return incr(key, 1, 0);
+    }
+
+    @Override
+    public long incr(String key, String namespace) {
+        return incr(key, 1, 0, namespace);
     }
 
     @Override
@@ -290,8 +313,21 @@ public class XMemcachedClient implements CacheClient {
     }
 
     @Override
+    public long incr(String key, long by, long defaultValue, String namespace) {
+        memcachedClient.beginWithNamespace(namespace);
+        long v = incr(key, by, defaultValue);
+        memcachedClient.endWithNamespace();
+        return v;
+    }
+
+    @Override
     public long decr(String key) {
         return decr(key, 1, 0);
+    }
+
+    @Override
+    public long decr(String key, String namespace) {
+        return decr(key, 1, 0, namespace);
     }
 
     @Override
@@ -302,6 +338,7 @@ public class XMemcachedClient implements CacheClient {
     /**
      * 递减
      */
+    @Override
     public long decr(String key, long by, long defaultValue) {
         try {
             MemcachedUtils.validateKey(key);
@@ -323,6 +360,15 @@ public class XMemcachedClient implements CacheClient {
         }
     }
 
+    @Override
+    public long decr(String key, long by, long defaultValue, String namespace) {
+        memcachedClient.beginWithNamespace(namespace);
+        long v = decr(key, by, defaultValue);
+        memcachedClient.endWithNamespace();
+        return v;
+    }
+
+    @Override
     public void flushAll() {
         try {
             if (StringUtil.isNotBlank(namespace)) {
@@ -366,6 +412,13 @@ public class XMemcachedClient implements CacheClient {
         } catch (Exception e) {
             logger.warn(" Add Server error:" + e.getMessage(), e);
         }
+    }
+
+    @Override
+    public boolean containKey(String key, String namespace) {
+        if (get(key, namespace) != null)
+            return true;
+        return false;
     }
 
     @Override

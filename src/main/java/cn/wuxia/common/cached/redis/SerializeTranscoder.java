@@ -10,7 +10,7 @@ public abstract class SerializeTranscoder {
 
     public abstract byte[] serialize(Object value);
 
-    public abstract Object deserialize(byte[] in);
+    public abstract Object deserialize(byte[] serializeBytes);
 
     public void close(Closeable closeable) {
         if (closeable != null) {

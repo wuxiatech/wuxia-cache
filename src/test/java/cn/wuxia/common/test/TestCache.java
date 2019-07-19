@@ -1,21 +1,35 @@
 /*
-* Created on :2017年8月3日
-* Author     :songlin
-* Change History
-* Version       Date         Author           Reason
-* <Ver.No>     <date>        <who modify>       <reason>
-* Copyright 2014-2020 wuxia.gd.cn All right reserved.
-*/
+ * Created on :2017年8月3日
+ * Author     :songlin
+ * Change History
+ * Version       Date         Author           Reason
+ * <Ver.No>     <date>        <who modify>       <reason>
+ * Copyright 2014-2020 wuxia.gd.cn All right reserved.
+ */
 package cn.wuxia.common.test;
 
 import cn.wuxia.common.cached.memcached.MemcachedUtils;
 import cn.wuxia.common.cached.memcached.XMemcachedClient;
+import cn.wuxia.common.cached.redis.ObjectsTranscoder;
+import cn.wuxia.common.cached.redis.RedisCacheClient;
+import cn.wuxia.common.cached.redis.RedisClusterCacheClient;
+import cn.wuxia.common.lock.JedisDistributedLock;
+import cn.wuxia.common.lock.RedisDistributedLock;
+import cn.wuxia.common.lock.RedissonDistributedLock;
 import cn.wuxia.common.util.DateUtil;
+import cn.wuxia.common.util.SerializeUtils;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+import org.junit.Test;
 
+import java.io.Serializable;
+import java.sql.Timestamp;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 public class TestCache {
-    
+
     public static void main(String[] args) {
 //        String key = "access_token";
 //        key += "wx8c625ac17367e886";
@@ -89,8 +103,105 @@ public class TestCache {
 //        }
 
 
+    }
 
+    @Test
+    public void testlock() throws InterruptedException {
+        RedisClusterCacheClient clusterCacheClient = new RedisClusterCacheClient();
+        clusterCacheClient.setPassword("test123");
+        clusterCacheClient.init(new String[]{"127.0.0.1:6379"});
+        JedisDistributedLock redisDistributeLock = new JedisDistributedLock(clusterCacheClient.getJedisCluster());
+        for (int i = 0; i < 50; i++) {
+            int finalI = i;
+            new Thread(() -> {
+                if (redisDistributeLock.tryLock("TEST_LOCK_KEY", "TEST_LOCK_VAL_" + finalI, 1000 * 100, 1000 * 20)) {
+                    try {
+                        System.out.println("get lock successfully with lock value:-----" + "TEST_LOCK_VAL_" + finalI);
+                        Thread.sleep(2000);
+                        if (!redisDistributeLock.tryUnLock("TEST_LOCK_KEY", "TEST_LOCK_VAL_" + finalI)) {
+                            throw new RuntimeException("release lock fail");
+                        }
+                        System.out.println("release lock successfully with lock value:-----" + "TEST_LOCK_VAL_" + finalI);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    System.out.println("get lock fail with lock value:-----" + "TEST_LOCK_VAL_" + finalI);
+                }
+            }).start();
+        }
+
+        Thread.sleep(1000 * 1000);
     }
 
 
+    @Test
+    public void testlock2() throws InterruptedException {
+        RedisCacheClient cacheClient = new RedisCacheClient();
+        cacheClient.setPassword("test123");
+        cacheClient.init(new String[]{"127.0.0.1:6379"});
+        for (int i = 0; i < 50; i++) {
+            int finalI = i;
+            new Thread(() -> {
+                if (RedisDistributedLock.tryLock(cacheClient, "TEST_LOCK_KEY", "TEST_LOCK_VAL_" + finalI, 1000 * 100)) {
+                    try {
+                        System.out.println("get lock successfully with lock value:-----" + "TEST_LOCK_VAL_" + finalI);
+                        Thread.sleep(2000);
+                        if (!RedisDistributedLock.tryUnlock(cacheClient, "TEST_LOCK_KEY", "TEST_LOCK_VAL_" + finalI)) {
+                            throw new RuntimeException("release lock fail");
+                        }
+                        System.out.println("release lock successfully with lock value:-----" + "TEST_LOCK_VAL_" + finalI);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    System.out.println("get lock fail with lock value:-----" + "TEST_LOCK_VAL_" + finalI);
+                }
+            }).start();
+        }
+
+        Thread.sleep(1000 * 100);
+    }
+
+    @Test
+    public void testlock3() throws InterruptedException {
+
+        RedissonDistributedLock redissonDistributedLock = new RedissonDistributedLock("redis://127.0.0.1:6379", "test123");
+        for (int i = 0; i < 50; i++) {
+            int finalI = i;
+            new Thread(() -> {
+                if (redissonDistributedLock.tryLock("TEST_LOCK_KEY", TimeUnit.MILLISECONDS, 1000 * 100, 200)) {
+                    try {
+                        System.out.println("get lock successfully with lock value:-----" + "TEST_LOCK_VAL_" + finalI);
+                        Thread.sleep(2000);
+                        redissonDistributedLock.unlock("TEST_LOCK_KEY");
+                        System.out.println("release lock successfully with lock value:-----" + "TEST_LOCK_VAL_" + finalI);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    System.out.println("get lock fail with lock value:-----" + "TEST_LOCK_VAL_" + finalI);
+                }
+            }).start();
+        }
+
+        Thread.sleep(1000 * 100);
+    }
+
+    @Test
+    public void testSer() {
+        A a = new A("abc", new Date(), DateUtil.newInstanceDate());
+        byte[] b = new ObjectsTranscoder().serialize(a);
+        Object c = new ObjectsTranscoder().deserialize(b);
+        System.out.println(c);
+    }
+
+    @Getter
+    @Setter
+    @AllArgsConstructor
+    class A implements Serializable {
+        String a;
+        Date b;
+        Timestamp c;
+    }
 }

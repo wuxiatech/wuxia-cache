@@ -23,6 +23,7 @@ import java.util.Set;
 
 /**
  * 简单的操作，复杂的操作需要直接操作jedis
+ *
  * @author songlin
  */
 public class RedisCacheClient implements CacheClient {
@@ -96,6 +97,7 @@ public class RedisCacheClient implements CacheClient {
 
     @Override
     public boolean containKey(String key) {
+        key = RedisUtils.formatKey(key);
         return BooleanUtils.toBooleanDefaultIfNull(jedis.exists(key), false);
     }
 
@@ -119,6 +121,7 @@ public class RedisCacheClient implements CacheClient {
     public void set(String key, Object value, int expiredTime) {
         if (value == null)
             return;
+        key = RedisUtils.formatKey(key);
         final byte[] keyf = key.getBytes();
         final byte[] valuef = new ObjectsTranscoder().serialize(value);
         jedis.setex(keyf, expiredTime, valuef);
@@ -131,16 +134,7 @@ public class RedisCacheClient implements CacheClient {
 
     @Override
     public void set(String key, Object value) {
-        if (value == null)
-            return;
-        final byte[] keyf = key.getBytes();
-//        if (value instanceof List) {
-//            final byte[] valuef = new ListTranscoder().serialize(value);
-//            jedis.set(keyf, valuef);
-//        } else {
-        final byte[] valuef = new ObjectsTranscoder().serialize(value);
-        jedis.set(keyf, valuef);
-//        }
+        set(key, value, expiredTime);
     }
 
     @Override
@@ -160,12 +154,15 @@ public class RedisCacheClient implements CacheClient {
 
     @Override
     public <T> T get(String key) {
+        
+        key = RedisUtils.formatKey(key);
         byte[] value = jedis.get(key.getBytes());
         return (T) new ObjectsTranscoder().deserialize(value);
     }
 
     @Override
     public long incr(String key) {
+        key = RedisUtils.formatKey(key);
         return jedis.incr(key);
     }
 
@@ -181,6 +178,7 @@ public class RedisCacheClient implements CacheClient {
 
     @Override
     public long incr(String key, long by, long defaultValue) {
+        key = RedisUtils.formatKey(key);
         Long r = jedis.incrBy(key, by);
         if (r == null) return defaultValue;
         return r;
@@ -193,6 +191,7 @@ public class RedisCacheClient implements CacheClient {
 
     @Override
     public long decr(String key) {
+        key = RedisUtils.formatKey(key);
         return jedis.decr(key);
     }
 
@@ -203,11 +202,13 @@ public class RedisCacheClient implements CacheClient {
 
     @Override
     public long decr(String key, long by) {
+        key = RedisUtils.formatKey(key);
         return jedis.incrBy(key, by);
     }
 
     @Override
     public long decr(String key, long by, long defaultValue) {
+        key = RedisUtils.formatKey(key);
         Long r = jedis.decrBy(key, by);
         if (r == null) return defaultValue;
         return r;
@@ -220,6 +221,7 @@ public class RedisCacheClient implements CacheClient {
 
     @Override
     public void delete(String key) {
+        key = RedisUtils.formatKey(key);
         jedis.del(key);
     }
 

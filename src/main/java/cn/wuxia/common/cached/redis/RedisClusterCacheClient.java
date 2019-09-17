@@ -93,6 +93,7 @@ public class RedisClusterCacheClient implements CacheClient {
 
     @Override
     public boolean containKey(String key) {
+        key = RedisUtils.formatKey(key);
         return BooleanUtils.toBooleanDefaultIfNull(jedisCluster.exists(key), false);
     }
 
@@ -117,6 +118,7 @@ public class RedisClusterCacheClient implements CacheClient {
         if (value == null) {
             return;
         }
+        key = RedisUtils.formatKey(key);
         final byte[] keyf = key.getBytes();
         final byte[] valuef = new ObjectsTranscoder().serialize(value);
         jedisCluster.setex(keyf, expiredTime, valuef);
@@ -132,6 +134,7 @@ public class RedisClusterCacheClient implements CacheClient {
         if (value == null) {
             return;
         }
+        key = RedisUtils.formatKey(key);
         final byte[] keyf = key.getBytes();
 //        if (value instanceof List) {
 //            final byte[] valuef = new ListTranscoder().serialize(value);
@@ -159,12 +162,14 @@ public class RedisClusterCacheClient implements CacheClient {
 
     @Override
     public <T> T get(String key) {
+        key = RedisUtils.formatKey(key);
         byte[] value = jedisCluster.get(key.getBytes());
         return (T) new ObjectsTranscoder().deserialize(value);
     }
 
     @Override
     public long incr(String key) {
+        key = RedisUtils.formatKey(key);
         return jedisCluster.incr(key);
     }
 
@@ -175,11 +180,13 @@ public class RedisClusterCacheClient implements CacheClient {
 
     @Override
     public long incr(String key, long by) {
+        key = RedisUtils.formatKey(key);
         return jedisCluster.incrBy(key, by);
     }
 
     @Override
     public long incr(String key, long by, long defaultValue) {
+        key = RedisUtils.formatKey(key);
         Long r = jedisCluster.incrBy(key, by);
         if (r == null) {
             return defaultValue;
@@ -194,6 +201,7 @@ public class RedisClusterCacheClient implements CacheClient {
 
     @Override
     public long decr(String key) {
+        key = RedisUtils.formatKey(key);
         return jedisCluster.decr(key);
     }
 
@@ -204,11 +212,13 @@ public class RedisClusterCacheClient implements CacheClient {
 
     @Override
     public long decr(String key, long by) {
+        key = RedisUtils.formatKey(key);
         return jedisCluster.incrBy(key, by);
     }
 
     @Override
     public long decr(String key, long by, long defaultValue) {
+        key = RedisUtils.formatKey(key);
         Long r = jedisCluster.decrBy(key, by);
         if (r == null) {
             return defaultValue;
@@ -223,6 +233,7 @@ public class RedisClusterCacheClient implements CacheClient {
 
     @Override
     public void delete(String key) {
+        key = RedisUtils.formatKey(key);
         jedisCluster.del(key);
     }
 

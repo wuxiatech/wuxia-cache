@@ -19,11 +19,12 @@ import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 /**
  * 简单的操作，复杂的操作需要直接操作jedis
- *
+ * 推荐使用redisson
  * @author songlin
  */
 public class RedisCacheClient implements CacheClient {

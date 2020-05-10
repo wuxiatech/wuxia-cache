@@ -140,14 +140,15 @@ public class TestCache {
         RedisCacheClient cacheClient = new RedisCacheClient();
         cacheClient.setPassword("test123");
         cacheClient.init(new String[]{"127.0.0.1:6379"});
+        RedisDistributedLock redisDistributedLock = new RedisDistributedLock(cacheClient);
         for (int i = 0; i < 50; i++) {
             int finalI = i;
             new Thread(() -> {
-                if (RedisDistributedLock.tryLock(cacheClient, "TEST_LOCK_KEY", "TEST_LOCK_VAL_" + finalI, 1000 * 100)) {
+                if (redisDistributedLock.tryLock( "TEST_LOCK_KEY", "TEST_LOCK_VAL_" + finalI, 1000 * 100)) {
                     try {
                         System.out.println("get lock successfully with lock value:-----" + "TEST_LOCK_VAL_" + finalI);
                         Thread.sleep(2000);
-                        if (!RedisDistributedLock.tryUnlock(cacheClient, "TEST_LOCK_KEY", "TEST_LOCK_VAL_" + finalI)) {
+                        if (!redisDistributedLock.tryUnlock("TEST_LOCK_KEY", "TEST_LOCK_VAL_" + finalI)) {
                             throw new RuntimeException("release lock fail");
                         }
                         System.out.println("release lock successfully with lock value:-----" + "TEST_LOCK_VAL_" + finalI);
@@ -170,7 +171,7 @@ public class TestCache {
         for (int i = 0; i < 50; i++) {
             int finalI = i;
             new Thread(() -> {
-                if (redissonDistributedLock.tryLock("TEST_LOCK_KEY", TimeUnit.MILLISECONDS, 1000 * 100, 200)) {
+                if (redissonDistributedLock.lock("TEST_LOCK_KEY", TimeUnit.MILLISECONDS, 1000 * 100, 200)) {
                     try {
                         System.out.println("get lock successfully with lock value:-----" + "TEST_LOCK_VAL_" + finalI);
                         Thread.sleep(2000);

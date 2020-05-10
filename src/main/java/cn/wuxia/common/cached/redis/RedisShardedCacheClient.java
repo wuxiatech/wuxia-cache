@@ -27,7 +27,9 @@ import java.util.Set;
 /**
  * 简单的操作，复杂的操作需要直接操作jedis
  * songlin.li
+ * 新版本redis不使用shard， 使用哨兵模式
  */
+@Deprecated
 public class RedisShardedCacheClient implements CacheClient {
     private static Logger logger = LoggerFactory.getLogger(RedisShardedCacheClient.class);
 

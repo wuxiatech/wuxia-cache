@@ -10,7 +10,7 @@ import org.redisson.config.Config;
 import java.util.concurrent.TimeUnit;
 
 @NoArgsConstructor
-public class RedissonDistributedLock {
+public class RedissonDistributedLock extends AbstractDistributedLock {
 
     private RedissonClient redissonClient;  //RedissonClient已经由配置类生成，这里自动装配即可
 
@@ -55,9 +55,14 @@ public class RedissonDistributedLock {
         return lock;
     }
 
-    //tryLock()，马上返回，拿到lock就返回true，不然返回false。
-    //带时间限制的tryLock()，拿不到lock，就等一段时间，超时返回false.
-    public boolean tryLock(String lockKey, TimeUnit unit, long waitTime, long leaseTime) {
+    /**
+     * tryLock()，马上返回，拿到lock就返回true，不然返回false。
+     */
+    /**
+     * 带时间限制的tryLock()，拿不到lock，就等一段时间，超时返回false.
+     */
+    @Override
+    public boolean lock(String lockKey, TimeUnit unit, long waitTime, long leaseTime) {
         RLock lock = redissonClient.getLock(lockKey);
         try {
             return lock.tryLock(waitTime, leaseTime, unit);
@@ -66,6 +71,7 @@ public class RedissonDistributedLock {
         }
     }
 
+    @Override
     public void unlock(String lockKey) {
         RLock lock = redissonClient.getLock(lockKey);
         lock.unlock();

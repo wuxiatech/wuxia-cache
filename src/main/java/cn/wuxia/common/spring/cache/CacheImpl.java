@@ -10,6 +10,8 @@ package cn.wuxia.common.spring.cache;
 
 import cn.wuxia.common.cached.CacheClient;
 import cn.wuxia.common.cached.memcached.MemcachedUtils;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.Cache;
@@ -24,6 +26,8 @@ import java.util.concurrent.Callable;
  * @author songlin
  * @ Version : V<Ver.No> <31 Aug, 2015>
  */
+@NoArgsConstructor
+@AllArgsConstructor
 public class CacheImpl implements Cache {
     private static Logger logger = LoggerFactory.getLogger(CacheImpl.class);
 

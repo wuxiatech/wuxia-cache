@@ -35,7 +35,7 @@ public class XMemcachedClient implements CacheClient {
      */
     @Override
     @SuppressWarnings("unchecked")
-    public <T> T get(String key) {
+    public <T> T get(String key, String namespace) {
         try {
             MemcachedUtils.validateKey(key);
             if (StringUtil.isNotBlank(namespace)) {
@@ -67,10 +67,11 @@ public class XMemcachedClient implements CacheClient {
      * @param key
      * @param value
      * @param expiredTime 缓存失效时间单位秒
+     * @param namespace
      * @return
      */
     @Override
-    public void add(String key, Object value, int expiredTime) {
+    public void add(String key, Object value, int expiredTime, String namespace) {
         if (value == null) {
             return;
         }
@@ -112,10 +113,11 @@ public class XMemcachedClient implements CacheClient {
      * @param key
      * @param value
      * @param expiredTime 缓存失效时间单位秒
+     * @param namespace
      * @return
      */
     @Override
-    public void set(String key, Object value, int expiredTime) {
+    public void set(String key, Object value, int expiredTime, String namespace) {
         if (value == null) {
             logger.warn("key[{}] --> value can't be null");
             return;
@@ -158,10 +160,11 @@ public class XMemcachedClient implements CacheClient {
      * @param key
      * @param value
      * @param expiredTime
+     * @param namespace
      * @return
      */
     @Override
-    public void replace(String key, Object value, int expiredTime) {
+    public void replace(String key, Object value, int expiredTime, String namespace) {
         if (value == null) {
             return;
         }
@@ -202,7 +205,7 @@ public class XMemcachedClient implements CacheClient {
      * 删除一个缓存数据
      */
     @Override
-    public void delete(String key) {
+    public void delete(String key, String namespace) {
         boolean isdelete = false;
         try {
             MemcachedUtils.validateKey(key);
@@ -286,7 +289,7 @@ public class XMemcachedClient implements CacheClient {
      * 自增长
      */
     @Override
-    public long incr(String key, long by, long defaultValue) {
+    public long incr(String key, long by, long defaultValue, String namespace) {
         try {
             MemcachedUtils.validateKey(key);
             Object v = memcachedClient.get(key);
@@ -308,10 +311,8 @@ public class XMemcachedClient implements CacheClient {
     }
 
     @Override
-    public long incr(String key, long by, long defaultValue, String namespace) {
-        memcachedClient.beginWithNamespace(namespace);
-        long v = incr(key, by, defaultValue);
-        memcachedClient.endWithNamespace();
+    public long incr(String key, long by, long defaultValue) {
+        long v = incr(key, by, defaultValue, namespace);
         return v;
     }
 
@@ -334,7 +335,7 @@ public class XMemcachedClient implements CacheClient {
      * 递减
      */
     @Override
-    public long decr(String key, long by, long defaultValue) {
+    public long decr(String key, long by, long defaultValue, String namespace) {
         try {
             MemcachedUtils.validateKey(key);
             Object v = memcachedClient.get(key);
@@ -356,10 +357,8 @@ public class XMemcachedClient implements CacheClient {
     }
 
     @Override
-    public long decr(String key, long by, long defaultValue, String namespace) {
-        memcachedClient.beginWithNamespace(namespace);
-        long v = decr(key, by, defaultValue);
-        memcachedClient.endWithNamespace();
+    public long decr(String key, long by, long defaultValue) {
+        long v = decr(key, by, defaultValue, namespace);
         return v;
     }
 
@@ -386,9 +385,13 @@ public class XMemcachedClient implements CacheClient {
 
     }
 
+    /**
+     * 逗号隔开
+     * @param servers
+     */
     public void addServer(String servers) {
         try {
-            memcachedClient.addServer(servers);
+            memcachedClient.addServer(MemcachedUtils.formatServerUrl(servers));
         } catch (IOException e) {
             logger.warn(" Add Server error:" + e.getMessage(), e);
         }
@@ -396,7 +399,7 @@ public class XMemcachedClient implements CacheClient {
 
     public void removeServer(String servers) {
         try {
-            memcachedClient.removeServer(servers);
+            memcachedClient.removeServer(MemcachedUtils.formatServerUrl(servers));
         } catch (Exception e) {
             logger.warn(" Add Server error:" + e.getMessage(), e);
         }
@@ -475,41 +478,31 @@ public class XMemcachedClient implements CacheClient {
     }
 
     @Override
-    public void add(String key, Object value, int expiredTime, String namespace) {
-        memcachedClient.beginWithNamespace(namespace);
-        add(key, value, expiredTime);
-        memcachedClient.endWithNamespace();
+    public void add(String key, Object value, int expiredTime) {
+        add(key, value, expiredTime, namespace);
     }
 
     @Override
-    public void set(String key, Object value, int expiredTime, String namespace) {
-        memcachedClient.beginWithNamespace(namespace);
-        set(key, value, expiredTime);
-        memcachedClient.endWithNamespace();
+    public void set(String key, Object value, int expiredTime) {
+        set(key, value, expiredTime, namespace);
 
     }
 
     @Override
-    public void replace(String key, Object value, int expiredTime, String namespace) {
-        memcachedClient.beginWithNamespace(namespace);
-        replace(key, value, expiredTime);
-        memcachedClient.endWithNamespace();
+    public void replace(String key, Object value, int expiredTime) {
+        replace(key, value, expiredTime, namespace);
 
     }
 
     @Override
-    public <T> T get(String key, String namespace) {
-        memcachedClient.beginWithNamespace(namespace);
-        T obj = get(key);
-        memcachedClient.endWithNamespace();
+    public <T> T get(String key) {
+        T obj = get(key, namespace);
         return obj;
     }
 
     @Override
-    public void delete(String key, String namespace) {
-        memcachedClient.beginWithNamespace(namespace);
-        delete(key);
-        memcachedClient.endWithNamespace();
+    public void delete(String key) {
+        delete(key, namespace);
     }
 
     @Override

@@ -11,6 +11,7 @@ package cn.wuxia.common.cached.redis;
 import cn.wuxia.common.cached.CacheClient;
 import cn.wuxia.common.util.ArrayUtil;
 import cn.wuxia.common.util.StringUtil;
+import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.slf4j.Logger;
@@ -23,6 +24,7 @@ import java.util.*;
  * 简单的操作，复杂的操作需要直接操作jedis
  * songlin.li
  */
+@NoArgsConstructor
 public class RedisClusterCacheClient implements CacheClient {
     private static Logger logger = LoggerFactory.getLogger(RedisClusterCacheClient.class);
 
@@ -32,6 +34,9 @@ public class RedisClusterCacheClient implements CacheClient {
 
     private String password;
 
+    public RedisClusterCacheClient(JedisCluster jedisCluster) {
+        this.jedisCluster = jedisCluster;
+    }
 
     @Override
     public void init(String[] servers) {

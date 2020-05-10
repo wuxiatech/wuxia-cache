@@ -11,6 +11,7 @@ package cn.wuxia.common.cached.redis;
 import cn.wuxia.common.cached.CacheClient;
 import cn.wuxia.common.util.ArrayUtil;
 import cn.wuxia.common.util.StringUtil;
+import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.BooleanUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +28,7 @@ import java.util.Set;
  * 推荐使用redisson
  * @author songlin
  */
+@NoArgsConstructor
 public class RedisCacheClient implements CacheClient {
     private static Logger logger = LoggerFactory.getLogger(RedisCacheClient.class);
 
@@ -37,6 +39,11 @@ public class RedisCacheClient implements CacheClient {
     private String password;
 
     private JedisPool jedisPool;
+
+    public RedisCacheClient(JedisPool jedisPool) {
+        this.jedisPool = jedisPool;
+        this.jedis = jedisPool.getResource();
+    }
 
     @Override
     public void init(String... server) {
@@ -62,6 +69,7 @@ public class RedisCacheClient implements CacheClient {
         } else {
             jedisPool = new JedisPool(config, host, Integer.valueOf(port));
         }
+
         jedis = jedisPool.getResource();
     }
 

@@ -1,11 +1,11 @@
 /*
-* Created on :1 Sep, 2015
-* Author     :songlin
-* Change History
-* Version       Date         Author           Reason
-* <Ver.No>     <date>        <who modify>       <reason>
-* Copyright 2014-2020 武侠科技 All right reserved.
-*/
+ * Created on :1 Sep, 2015
+ * Author     :songlin
+ * Change History
+ * Version       Date         Author           Reason
+ * <Ver.No>     <date>        <who modify>       <reason>
+ * Copyright 2014-2020 武侠科技 All right reserved.
+ */
 package cn.wuxia.common.cached.memcached;
 
 import org.apache.commons.codec.binary.StringUtils;
@@ -18,8 +18,9 @@ public class MemcachedUtils {
 
     /**
      * 校验key是否符合规则
-     * @author songlin
+     *
      * @param key
+     * @author songlin
      */
     public static void validateKey(String key) {
         if (StringUtil.isBlank(key)) {
@@ -40,8 +41,9 @@ public class MemcachedUtils {
 
     /**
      * 校验key是否存在不符合规则的字符
-     * @author songlin
+     *
      * @param key
+     * @author songlin
      */
     public static boolean hasControlChar(String key) {
         if (StringUtil.isBlank(key)) {
@@ -59,9 +61,36 @@ public class MemcachedUtils {
 
     /**
      * sha1加密,返回40位十六进制字符串,防止key值过长或者不合法的傻瓜式处理
+     *
      * @author songlin
      */
     public static String shaKey(String key) {
         return DigestUtils.sha1Hex(org.apache.commons.codec.binary.StringUtils.getBytesUtf8(key));
+    }
+
+    /**
+     * 将127.0.0.1:11211,127.0.0.1:11211 -> 127.0.0.1:11211 127.0.0.1:11211
+     *
+     * @param servers
+     * @return
+     */
+    public static String formatServerUrl(String servers) {
+        return StringUtil.replace(servers, ",", " ");
+    }
+
+    /**
+     * 将127.0.0.1:11211,127.0.0.1:11211 -> [127.0.0.1:11211,127.0.0.1:11211]
+     *
+     * @param servers
+     * @return
+     */
+    public static String[] serverUrl2Array(String servers) {
+        if (StringUtil.indexOf(servers, ",") > 0) {
+            return StringUtil.split(servers, ",");
+        } else if (StringUtil.indexOf(servers, " ") > 0) {
+            return StringUtil.split(servers, " ");
+        } else {
+            return new String[]{servers};
+        }
     }
 }

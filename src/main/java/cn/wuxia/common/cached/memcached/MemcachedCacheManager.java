@@ -3,6 +3,7 @@ package cn.wuxia.common.cached.memcached;
 import cn.wuxia.common.cached.CacheClient;
 import cn.wuxia.common.spring.cache.CacheImpl;
 import cn.wuxia.common.spring.enums.CacheNameEnum;
+import cn.wuxia.common.spring.handler.SpringCacheManager;
 import cn.wuxia.common.util.PropertiesUtils;
 import cn.wuxia.common.util.StringUtil;
 import com.google.common.collect.Sets;
@@ -24,8 +25,8 @@ import java.util.Properties;
 import java.util.Set;
 
 @Configuration
-@EnableCaching
-@Conditional(MemcachedCacheManager.InitMemcacheCondition.class)
+//@EnableCaching
+@Conditional(SpringCacheManager.InitMemcachedCondition.class)
 @PropertySource(value = {"classpath:memcached.properties", "classpath:properties/memcached.properties"}, ignoreResourceNotFound = true)
 @Slf4j
 public class MemcachedCacheManager {
@@ -102,7 +103,7 @@ public class MemcachedCacheManager {
     }
 
 
-    @Conditional(InitCacheManageCondition.class)
+    @Conditional(SpringCacheManager.InitMemcachedManagerCondition.class)
     @Bean
     @Lazy
     public CacheManager cacheManager() {
@@ -125,43 +126,4 @@ public class MemcachedCacheManager {
 
     }
 
-    public static class InitMemcacheCondition implements Condition {
-
-        @Override
-        public boolean matches(ConditionContext conditionContext, AnnotatedTypeMetadata annotatedTypeMetadata) {
-            try {
-                Properties properties = PropertiesUtils.loadProperties("classpath:properties/memcached.properties", "classpath:memcached.properties");
-                if (properties.isEmpty()) {
-                    return false;
-                } else if (StringUtil.equalsIgnoreCase(properties.getProperty("cache.enable"), "true")) {
-                    return true;
-                } else {
-                    return false;
-                }
-            } catch (Exception e) {
-                return false;
-            }
-        }
-    }
-
-
-    public static class InitCacheManageCondition implements Condition {
-
-
-        @Override
-        public boolean matches(ConditionContext conditionContext, AnnotatedTypeMetadata annotatedTypeMetadata) {
-            try {
-                Properties properties = PropertiesUtils.loadProperties("classpath:properties/application.properties", "classpath:application.properties");
-                if (properties.isEmpty()) {
-                    return false;
-                } else if (StringUtil.equalsIgnoreCase("memcache", properties.getProperty("spring.cache"))) {
-                    return true;
-                } else {
-                    return false;
-                }
-            } catch (Exception e) {
-                return false;
-            }
-        }
-    }
 }

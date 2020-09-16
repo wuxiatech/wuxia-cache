@@ -2,6 +2,7 @@ package cn.wuxia.common.cached.redis;
 
 import cn.wuxia.common.lock.RedissonDistributedLock;
 import cn.wuxia.common.spring.enums.CacheNameEnum;
+import cn.wuxia.common.spring.handler.SpringCacheManager;
 import cn.wuxia.common.util.PropertiesUtils;
 import cn.wuxia.common.util.StringUtil;
 import com.google.common.collect.Maps;
@@ -20,9 +21,9 @@ import java.util.Map;
 import java.util.Properties;
 
 @Configuration
-@EnableCaching
+//@EnableCaching
 //@EnableRedissonHttpSession
-@Conditional(RedissonSpringCacheManager.InitRedissonCondition.class)
+@Conditional(SpringCacheManager.InitRedissonCondition.class)
 @PropertySource(value = {"classpath:redis.properties", "classpath:properties/redis.properties"}, ignoreResourceNotFound = true)
 @Slf4j
 public class RedissonSpringCacheManager {
@@ -144,27 +145,9 @@ public class RedissonSpringCacheManager {
         return locker;
     }
 
-    public static class InitRedissonCondition implements Condition {
 
-        @Override
-        public boolean matches(ConditionContext conditionContext, AnnotatedTypeMetadata annotatedTypeMetadata) {
-            try {
-                Properties properties = PropertiesUtils.loadProperties("classpath:properties/redis.properties", "classpath:redis.properties");
-                if (properties.isEmpty()) {
-                    return false;
-                } else if (StringUtil.equalsIgnoreCase(properties.getProperty("cache.enable"), "true")) {
-                    return true;
-                } else {
-                    return false;
-                }
-//                Class clazz = ClassLoaderUtil.loadClass("");
-            } catch (Exception e) {
-                return false;
-            }
-        }
-    }
 
-    @Conditional(InitCacheManageCondition.class)
+    @Conditional(SpringCacheManager.InitRedissonCacheManagerCondition.class)
     @Bean
     @Lazy
     public CacheManager cacheManager() {
@@ -189,23 +172,5 @@ public class RedissonSpringCacheManager {
 
     }
 
-    public static class InitCacheManageCondition implements Condition {
 
-
-        @Override
-        public boolean matches(ConditionContext conditionContext, AnnotatedTypeMetadata annotatedTypeMetadata) {
-            try {
-                Properties properties = PropertiesUtils.loadProperties("classpath:properties/application.properties", "classpath:application.properties");
-                if (properties.isEmpty()) {
-                    return false;
-                } else if (StringUtil.equalsIgnoreCase("redisson", properties.getProperty("spring.cache"))) {
-                    return true;
-                } else {
-                    return false;
-                }
-            } catch (Exception e) {
-                return false;
-            }
-        }
-    }
 }

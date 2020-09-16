@@ -44,6 +44,7 @@ public class CacheImpl implements Cache {
     }
 
     public void setCacheClient(CacheClient cacheClient) {
+        logger.info("init spring cache, cache client: {}", cacheClient.getClass().getName());
         this.cacheClient = cacheClient;
     }
 
@@ -114,6 +115,7 @@ public class CacheImpl implements Cache {
     }
 
     public void setCacheName(String cacheName) {
+        logger.info("init spring cache, cache name: {}", cacheName);
         this.cacheName = cacheName;
     }
 

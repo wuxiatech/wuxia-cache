@@ -3,6 +3,7 @@ package cn.wuxia.common.cached.redis;
 import cn.wuxia.common.cached.CacheClient;
 import cn.wuxia.common.spring.cache.CacheImpl;
 import cn.wuxia.common.spring.enums.CacheNameEnum;
+import cn.wuxia.common.spring.handler.SpringCacheManager;
 import cn.wuxia.common.util.ArrayUtil;
 import cn.wuxia.common.util.PropertiesUtils;
 import cn.wuxia.common.util.StringUtil;
@@ -24,8 +25,8 @@ import java.util.Properties;
 import java.util.Set;
 
 @Configuration
-@EnableCaching
-@Conditional(JRedisCacheManager.InitJRedisCondition.class)
+//@EnableCaching
+@Conditional(SpringCacheManager.InitJRedisCondition.class)
 @PropertySource(value = {"classpath:redis.properties", "classpath:properties/redis.properties"}, ignoreResourceNotFound = true)
 @Slf4j
 public class JRedisCacheManager {
@@ -97,7 +98,7 @@ public class JRedisCacheManager {
         return cacheClient;
     }
 
-    @Conditional(InitCacheManageCondition.class)
+    @Conditional(SpringCacheManager.InitJRedisCacheManagerCondition.class)
     @Bean
     @Lazy
     public CacheManager cacheManager() {
@@ -123,44 +124,5 @@ public class JRedisCacheManager {
 
     }
 
-    public static class InitCacheManageCondition implements Condition {
-
-
-        @Override
-        public boolean matches(ConditionContext conditionContext, AnnotatedTypeMetadata annotatedTypeMetadata) {
-            try {
-                Properties properties = PropertiesUtils.loadProperties("classpath:properties/application.properties", "classpath:application.properties");
-                if (properties.isEmpty()) {
-                    return false;
-                } else if (StringUtil.equalsIgnoreCase("jredis", properties.getProperty("spring.cache"))) {
-                    return true;
-                } else {
-                    return false;
-                }
-            } catch (Exception e) {
-                return false;
-            }
-        }
-    }
-
-    public static class InitJRedisCondition implements Condition {
-
-        @Override
-        public boolean matches(ConditionContext conditionContext, AnnotatedTypeMetadata annotatedTypeMetadata) {
-            try {
-                Properties properties = PropertiesUtils.loadProperties("classpath:properties/redis.properties", "classpath:redis.properties");
-                if (properties.isEmpty()) {
-                    return false;
-                } else if (StringUtil.equalsIgnoreCase(properties.getProperty("cache.enable"), "true")) {
-                    return true;
-                } else {
-                    return false;
-                }
-//                Class clazz = ClassLoaderUtil.loadClass("");
-            } catch (Exception e) {
-                return false;
-            }
-        }
-    }
 
 }
